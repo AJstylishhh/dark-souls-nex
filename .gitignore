@@ -1,0 +1,7 @@
+certs/
+*.pfx
+*.key
+!.gitkeep
+.env
+nextendo_secret.key
+logs/

@@ -1,0 +1,10 @@
+# Atmosphere DNS mitm — Dark Souls Remastered (Switch) NEX lab
+# File: atmosphere/hosts/emummc.txt  OR  atmosphere/hosts/sysmmc.txt
+#
+# PC ICS IP: 192.168.137.1
+# enable_dns_mitm = u8!0x1  in atmosphere/config/system_settings.ini
+# Full power-off reboot after editing.
+
+192.168.137.1  g2c126c00-lp1.s.n.srv.nintendo.net
+192.168.137.1  nncs1-lp1.n.n.srv.nintendo.net
+192.168.137.1  nncs2-lp1.n.n.srv.nintendo.net
