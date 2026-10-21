@@ -109,7 +109,7 @@ func main() {
 		fmt.Printf("[DS Secure] connected pid=%d id=%d addr=%s\n", c.PID, c.ID, c.RemoteAddr)
 	}
 	secureEndpoint.OnDisconnect = func(c *nex.Connection) {
-		fmt.Printf("[DS Secure] disconnected pid=%d addr=%s\\n", c.PID, c.RemoteAddr)
+		fmt.Printf("[DS Secure] disconnected pid=%d addr=%s\n", c.PID, c.RemoteAddr)
 		mm.RemovePlayer(c.PID)
 	}
 	secureServer := nex.NewServer(secureEndpoint)
