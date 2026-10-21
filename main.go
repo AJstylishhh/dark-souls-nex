@@ -1,8 +1,8 @@
 // Dark Souls Remastered (Switch) NEX server on nextendo-nex.
 //
 // Game server ID : 2c126c00  → hostname g2c126c00-lp1.s.n.srv.nintendo.net
-// Access key     : from env ACCESS_KEY (required — extract from main NSO / capture)
-// NEX build mark : NEX_DS-4_3_1 (from dumped main)
+// Access key     : fafa948a  (from NEX init at ~0x5bb738 — static RE; live-test to confirm)
+// NEX build mark : NEX_DS-4_3_1
 //
 // Auth : AUTH_PORT (default 443)
 // Secure : SECURE_PORT (default 60010)
@@ -24,14 +24,15 @@ import (
 )
 
 const (
-	gameServerID  = "2c126c00"
-	nexVersion    = 40000
-	securePID     = 2
-	sessionKeyLen = 32
+	defaultAccessKey = "fafa948a" // RE: NEX init struct next to gameServer 0x2c126c00
+	gameServerID     = "2c126c00"
+	nexVersion       = 40000
+	securePID        = 2
+	sessionKeyLen    = 32
 )
 
 var (
-	accessKey      = strings.TrimSpace(envOr("ACCESS_KEY", ""))
+	accessKey      = strings.TrimSpace(envOr("ACCESS_KEY", defaultAccessKey))
 	nextendoHost   = envOr("NEXTENDO_HOST", "192.168.137.1")
 	authPort       = envOrInt("AUTH_PORT", 443)
 	securePort     = envOrInt("SECURE_PORT", 60010)
@@ -45,11 +46,8 @@ var (
 )
 
 func main() {
-	if accessKey == "" || len(accessKey) != 8 {
-		fmt.Println("[DS] ERROR: set ACCESS_KEY to the 8-character NEX access key from the game.")
-		fmt.Println("[DS] Example:  $env:ACCESS_KEY = \"xxxxxxxx\"")
-		fmt.Println("[DS] Hostname is known: g2c126c00-lp1.s.n.srv.nintendo.net (gameServer=2c126c00)")
-		fmt.Println("[DS] Key was not in plain strings of main; extract from NSO or a live NEX capture.")
+	if len(accessKey) != 8 {
+		fmt.Printf("[DS] ERROR: ACCESS_KEY must be 8 chars (got %q)\n", accessKey)
 		os.Exit(1)
 	}
 

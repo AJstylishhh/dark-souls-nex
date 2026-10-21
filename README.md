@@ -1,50 +1,31 @@
 # dark-souls-nex
 
-**Lab / private NEX server** for **Dark Souls Remastered** on Nintendo Switch (CFW).
+Private **NEX lab** for **Dark Souls Remastered** on Switch (CFW).
 
-Based on the same stack as [dying-light-nex](https://github.com/AJstylishhh/dying-light-nex) (`nextendo-nex`).
+Built on [nextendo-nex](https://github.com/NextendoNetwork/nextendo-nex) (same core as dying-light-nex).
 
-## Confirmed from your dump + pcap
+## Constants (from dump + RE)
 
 | Item | Value |
 |------|--------|
-| Game server host | **`g2c126c00-lp1.s.n.srv.nintendo.net`** |
-| Game server id | **`2c126c00`** |
-| Stack | **Nintendo NEX / Quazal** (`NEX_DS-4_3_1`, `prudp:/address=`, Matchmake, NatTraversal) |
-| Title id (cheats/wiki) | `01004AB00A260000` |
-| Access key | **Not yet extracted** as plain text from `main` — set `ACCESS_KEY` when you have it |
+| Access key | **`fafa948a`** (NEX init ~0x5bb738; next to game server id in struct) |
+| Game server ID | **`2c126c00`** (`0x2c126c00`) |
+| Host | **`g2c126c00-lp1.s.n.srv.nintendo.net`** |
+| NEX mark | `NEX_DS-4_3_1` |
 
-This is **not** World War Z (Hydra/protobuf). Same family as Dying Light.
+Static analysis is strong (ID matches your SNI). **Live test** is the final proof — if signature fails, report the console log line.
 
-## Honest status
-
-| Works after setup | Needs access key + longer online capture |
-|-------------------|------------------------------------------|
-| Repo, certs, hosts, auth/secure listen | Correct 8-char `ACCESS_KEY` |
-| NNCS NAT responder | Full summon/invasion protocol tuning |
-| Guest login (`NEXTENDO_REQUIRE_ACCOUNT=0`) | May need DS-specific matchmake quirks |
-
-**Do not expect full co-op on day one** until the access key matches the client.
-
-## Your lab network
-
-| Device | IP |
-|--------|-----|
-| PC (ICS) | **192.168.137.1** |
-| Switch | 192.168.137.x |
-
-## Setup (same idea as Dying Light)
-
-### 1. Clone
+## Quick start (your ICS: 192.168.137.1)
 
 ```powershell
 cd $env:USERPROFILE\OneDrive\Desktop
 git clone https://github.com/AJstylishhh/dark-souls-nex.git
 cd dark-souls-nex
+git pull
 go mod tidy
 ```
 
-### 2. Certs (SNI host = game server name)
+### Certs
 
 ```powershell
 New-Item -ItemType Directory -Path certs -Force | Out-Null
@@ -71,40 +52,33 @@ DNS.1 = g2c126c00-lp1.s.n.srv.nintendo.net
 & $openssl req -x509 -newkey rsa:2048 -nodes -keyout certs\server.key -out certs\server.crt -days 825 -config certs\openssl.cnf
 ```
 
-### 3. Switch hosts
+### Switch hosts
 
-Copy from `hosts-snippet.txt` into `atmosphere/hosts/emummc.txt` or `sysmmc.txt`, reboot full power-off.
+See `hosts-snippet.txt` → `atmosphere/hosts/emummc.txt` or `sysmmc.txt`, full power-off reboot.
 
-### 4. Run (after ACCESS_KEY is set)
+### Run
 
 ```powershell
-cd "C:\Users\Asif Ali IBS\OneDrive\Desktop\dark-souls-nex"
+cd "...\dark-souls-nex"
 $env:NEXTENDO_HOST = "192.168.137.1"
+$env:ACCESS_KEY = "fafa948a"
 $env:AUTH_PORT = "443"
 $env:SECURE_PORT = "60010"
 $env:CERT_FILE = "certs/server.crt"
 $env:KEY_FILE = "certs/server.key"
 $env:NEXTENDO_REQUIRE_ACCOUNT = "0"
-$env:ACCESS_KEY = "PASTE_8_CHAR_KEY_HERE"
+$env:DS_TRACE = "1"
 go run .
 ```
 
-Allow Python/Go or turn Private firewall off only while testing (same as WWZ/DL).
+You should see:
 
-## Finding ACCESS_KEY
+```text
+[DS] gameServer=2c126c00 ... accessKey=fafa948a
+[DS Auth] listening :443
+[DS Secure] listening :60010
+```
 
-1. Longer Wireshark while **placing a summon sign / getting invaded** (not only menu).
-2. Or deeper search in `main` NSO (Dying Light had `0da38dbb` in strings; DS did not show a clear 8-hex key in the first pass).
+Then open Dark Souls online (soapstone / summon). Watch for `[DS Auth]` / `[DS Secure]` lines.
 
-When the key is wrong, auth/ticket usually fails immediately.
-
-## Difference vs Dying Light
-
-| | Dying Light | Dark Souls Switch |
-|--|-------------|-------------------|
-| Host | `g27332e00-…` | `g2c126c00-…` |
-| Access key | `0da38dbb` known | **TBD** |
-| NEX string | SDK-style | `NEX_DS-4_3_1` |
-| Gameplay | Lobby/coop | Summon / invade / soapstone |
-
-Matchmaking methods may differ; logs (`DS_TRACE=1`) will show what the client calls after auth works.
+If the client rejects crypto, paste the server log — key may need a transform (unlikely but possible).
